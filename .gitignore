@@ -1,0 +1,36 @@
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Datasets and checkpoints
+data/
+# datasets/
+checkpoints/
+weights/
+runs/
+logs/
+*.pth
+*.pt
+*.onnx
+*outputs*/
+*checkpoints*/
+*dataset*/
+*result*/
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
+# models output file 
+
+generate_deblurred_dataset*
+generate_deblurred_outputs_modified_gan*
+generate_deblurred_outputs*
+
