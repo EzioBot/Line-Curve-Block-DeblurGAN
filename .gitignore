@@ -25,19 +25,8 @@ logs/
 .idea/
 .DS_Store
 Thumbs.db
+*outputs*/ 
 
-# Ignore generated result images except the curated comparison images used in the README
-# Keep the local dataset, checkpoints, and other generated artifacts hidden.
-deblurred_outputs/**/*.png
-deblurred_outputs/**/*.jpg
-deblurred_outputs/**/*.jpeg
-deblurred_outputs/**/*.bmp
-!deblurred_outputs/review/
-!deblurred_outputs/review/modified_gan_random_samples.png
-!deblurred_outputs/review/modified_gan_worst.png
-!deblurred_outputs/review/nafnet_worst.png
-!deblurred_outputs/review/random_samples.png
-!deblurred_outputs/review/unet_worst.png
 
 # models output file 
 

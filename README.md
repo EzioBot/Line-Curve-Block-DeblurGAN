@@ -2,7 +2,7 @@
 
 A research-focused image restoration project for recovering motion-blurred and distorted Bangla vehicle license plate images using a modified DeblurGAN-v2 generator with a custom Line-Curve block.
 
-The implementation is centered on preserving Bangla character geometry, including horizontal matras, vertical strokes, curves, and structural details that are often lost under motion or Gaussian blur. This repository documents the model architecture, dataset preparation, training setup, and experimental evaluation performed in the local project workspace.
+The implementation is centered on preserving Bangla character geometry, including horizontal matras, vertical strokes, curves, and structural details that are often lost under motion or defocus blur. This repository documents the model architecture, dataset preparation, training setup, and experimental evaluation performed in the local project workspace.
 
 ## Table of Contents
 
@@ -17,7 +17,6 @@ The implementation is centered on preserving Bangla character geometry, includin
 - [Inference and Usage](#inference-and-usage)
 - [Experimental Results](#experimental-results)
 - [Model Comparison](#model-comparison)
-- [Visual Results](#visual-results)
 - [Repository Structure](#repository-structure)
 - [Installation and Requirements](#installation-and-requirements)
 - [Limitations and Future Work](#limitations-and-future-work)
@@ -32,9 +31,12 @@ The repository contains a modified DeblurGAN-v2-style generator trained on paire
 
 The implementation is primarily notebook-based and is stored in the project root as `Line-Curve Block DelburGAN.ipynb`, which defines the dataset pipeline, generator/discriminator, loss functions, training loop, and evaluation logic.
 
+**Blur terminology:** The project addresses defocus blur and motion blur. Some existing folder names, notebook variables, and saved CSV values still use `Gaussian`/`gaussian` as a legacy label for the defocus-blurred examples; this README uses **defocus blur** when describing the task and calls out the legacy label where it appears.
+
 ## Key Features
 
 - Modified DeblurGAN-v2-style generator for license plate image restoration.
+- Targets both defocus blur and motion blur. In existing artifact names, the defocus subset may be labeled `Gaussian` or `gaussian`.
 - Custom `LineCurveBlock` with three parallel processing branches:
   - horizontal strip convolution
   - vertical strip convolution
@@ -50,7 +52,7 @@ The implementation is primarily notebook-based and is stored in the project root
 
 ## Research Motivation
 
-Bangla license plates are difficult to restore because the characters are visually complex, densely arranged, and highly sensitive to blur. Horizontal matras, vertical components, and curved strokes are often merged or lost when motion blur or Gaussian blur degrades the image. Standard generic restoration networks can recover global contrast but may fail to preserve fine character geometry, which is critical for plate readability and downstream OCR.
+Bangla license plates are difficult to restore because the characters are visually complex, densely arranged, and highly sensitive to blur. Horizontal matras, vertical components, and curved strokes are often merged or lost when motion blur or defocus blur degrades the image. Standard generic restoration networks can recover global contrast but may fail to preserve fine character geometry, which is critical for plate readability and downstream OCR.
 
 This project focuses on a structural restoration objective: the model should not merely smooth the image, but should maintain the topology of Bangla characters. The custom `LineCurveBlock` is designed around that idea by explicitly separating feature extraction into directional and deformable subpaths, making the network more responsive to long repeated strokes and curved regions.
 
@@ -58,28 +60,26 @@ This project focuses on a structural restoration objective: the model should not
 
 The workflow implemented in the project follows a paired-image supervised restoration pipeline:
 
-1. Clean license plate images are paired with blurred versions generated from Gaussian and motion blur sources.
+1. Clean license plate images are paired with defocus-blurred and motion-blurred versions. The defocus subset is stored under legacy `gaussian` folder/variable names.
 2. The blurred image is processed by the generator.
 3. The generator uses downsampling and multi-scale residual feature extraction with `LineCurveBlock` modules.
 4. A discriminator evaluates realism and adversarial consistency.
 5. The network is trained using a combined objective involving L1 reconstruction, edge preservation, perceptual similarity, and adversarial loss.
 6. The model is evaluated on validation/test images using PSNR, SSIM, and MAE.
 
-```mermaid
-flowchart LR
-    A[Blurred Bangla Plate] --> B[Generator with Line-Curve Blocks]
-    B --> C[Multi-scale Encoder-Decoder Restoration]
-    C --> D[Deblurred Output]
-    D --> E[Discriminator]
-    D --> F[Evaluation Metrics]
-    A --> F
-    G[Clean Ground Truth] --> F
-    G --> E
-```
+![GAN overview showing the generator, PatchGAN discriminator, and training losses](figures/gan_overview_diagram.png)
 
 ## Line-Curve Block Architecture
 
 The central contribution of the project is the custom `LineCurveBlock`, implemented in the main notebook. The block is designed to capture the two dominant structural directions in Bangla characters: horizontal strokes and vertical strokes, while also learning curvilinear patterns through a deformable path.
+
+### Generator architecture
+
+![Generator architecture with Line-Curve Blocks](figures/fig2_generator_architecture.png)
+
+### Line-Curve Block diagram
+
+![Line-Curve Block branches, fusion, and gating](figures/line_curve_block_diagram.png)
 
 The actual implementation from the notebook shows the following structure:
 
@@ -189,9 +189,9 @@ This is a reasonable multi-objective setup for image restoration, where structur
 
 ## Dataset and Preprocessing
 
-The notebook uses a paired-image dataset with one clean plate image and two degraded variants:
+The notebook uses a paired-image dataset with one clean plate image and two degraded variants: defocus blur and motion blur.
 
-- `GAUSSIAN_DIR = r"D:\_deblur gan\new dataset\light_gaussian_blurred"`
+- `GAUSSIAN_DIR = r"D:\_deblur gan\new dataset\light_gaussian_blurred"` (legacy variable/folder name for the defocus-blurred images)
 - `MOTION_DIR = r"D:\_deblur gan\new dataset\light_motion_blurred"`
 - `CLEAN_DIR = r"D:\_deblur gan\new dataset\fixed cropped"`
 
@@ -246,7 +246,7 @@ Example of the verified training configuration:
 
 ```python
 CLEAN_DIR = r"D:\_deblur gan\new dataset\fixed cropped"
-GAUSSIAN_DIR = r"D:\_deblur gan\new dataset\light_gaussian_blurred"
+GAUSSIAN_DIR = r"D:\_deblur gan\new dataset\light_gaussian_blurred"  # legacy name for defocus-blurred images
 MOTION_DIR = r"D:\_deblur gan\new dataset\light_motion_blurred"
 
 IMG_H = 128
@@ -292,7 +292,7 @@ The CSV file `deblurred_outputs/per_image_metrics_modified_gan.csv` contains per
 
 | Blur type | Blurry PSNR | Deblurred PSNR | Blurry SSIM | Deblurred SSIM | Blurry MAE | Deblurred MAE | PSNR gain |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Gaussian | 28.9050 | 33.5253 | 0.8899 | 0.9438 | 6.5823 | 4.0031 | +4.6203 |
+| Defocus (CSV label: `gaussian`) | 28.9050 | 33.5253 | 0.8899 | 0.9438 | 6.5823 | 4.0031 | +4.6203 |
 | Motion | 23.6328 | 29.6682 | 0.7444 | 0.9029 | 11.4394 | 6.0193 | +6.0354 |
 
 These values are based on the project’s saved evaluation CSV and represent the recorded deblurring performance on the local experiment set. They should be interpreted as repository-supported observations, not as global benchmark claims.
@@ -303,100 +303,40 @@ Important caveat: because the project uses local folder paths and notebook-defin
 
 ### Model Comparison
 
-In addition to the proposed Line-Curve model, baseline models were implemented and trained in separate project notebooks, including U-Net, NAFNet, Pix2Pix, DeblurGAN v1, and DeblurGAN v2. The saved comparison CSV, `deblurred_outputs/per_image_metrics.csv`, reports per-image results for U-Net and NAFNet. The proposed model's corresponding CSV is `deblurred_outputs/per_image_metrics_modified_gan.csv`.
+In addition to the proposed Line-Curve model, baseline models were implemented and trained in separate project notebooks: U-Net, NAFNet, Pix2Pix, DeblurGAN v1, and DeblurGAN v2. U-Net and NAFNet scores are also stored in `deblurred_outputs/per_image_metrics.csv`; scores for the other baselines are taken from the saved per-blur validation summaries in their notebooks. The proposed model's results come from `deblurred_outputs/per_image_metrics_modified_gan.csv` and its notebook.
 
-The table summarizes the means recorded in those two files. PSNR is higher-is-better; SSIM is higher-is-better; MAE is lower-is-better.
+The tables report per-blur mean PSNR, SSIM, and MAE. PSNR and SSIM are higher-is-better; MAE is lower-is-better.
 
-| Blur type | Model | CSV split label | PSNR (dB) | SSIM | MAE |
-| --- | --- | --- | ---: | ---: | ---: |
-| Gaussian | Blurred input | `val` / `test`* | 28.9050 | 0.8899 | 6.5823 |
-| Gaussian | U-Net | `val` | 34.3991 | 0.9512 | 3.4491 |
-| Gaussian | NAFNet | `val` | 35.7643 | 0.9585 | 3.0160 |
-| Gaussian | Line-Curve Block model | `test` | 33.5253 | 0.9438 | 4.0031 |
-| Motion | Blurred input | `val` / `test`* | 23.6328 | 0.7444 | 11.4394 |
-| Motion | U-Net | `val` | 30.2414 | 0.9108 | 5.3887 |
-| Motion | NAFNet | `val` | 32.0822 | 0.9301 | 4.4903 |
-| Motion | Line-Curve Block model | `test` | 29.6682 | 0.9029 | 6.0193 |
+### Defocus Blur (CSV label: `gaussian`)
 
-Each CSV contains 199 unique image names per blur type. The image names overlap across the baseline and proposed-model files, and their recorded blurred-input metrics match for each image. However, the baseline CSV labels the examples as `val`, while the proposed-model CSV labels them as `test`. Because the repository does not explain this split-label discrepancy, these numbers should be treated as results from the saved comparison artifacts, not as a fully controlled benchmark or evidence that one architecture universally outperforms another. In these recorded means, U-Net and NAFNet score higher than the proposed model on PSNR and SSIM and lower on MAE; the proposed model still improves on the blurred input for both blur types.
+| Model | Evaluation split | PSNR (dB) | SSIM | MAE |
+| --- | --- | ---: | ---: | ---: |
+| U-Net | Validation | 34.40 | 0.9512 | 3.45 |
+| NAFNet | Validation | 35.76 | 0.9585 | 3.02 |
+| Line-Curve Block model (new) | Test | 33.53 | 0.9438 | 4.00 |
+| Pix2Pix | Validation | 29.43 | 0.8922 | 6.08 |
+| DeblurGAN v1 | Validation | 29.37 | 0.8788 | 6.13 |
+| DeblurGAN v2 | Validation | 31.37 | 0.9246 | 4.78 |
 
-The notebooks establish that the other baseline architectures were trained, but the currently saved per-image comparison CSV does not provide quantitative results for Pix2Pix or the DeblurGAN v1/v2 baselines. No numbers for those models are included here.
+### Motion Blur
 
-## Visual Results
+| Model | Evaluation split | PSNR (dB) | SSIM | MAE |
+| --- | --- | ---: | ---: | ---: |
+| U-Net | Validation | 30.24 | 0.9108 | 5.39 |
+| NAFNet | Validation | 32.08 | 0.9301 | 4.49 |
+| Line-Curve Block model (new) | Test | 29.67 | 0.9029 | 6.02 |
+| Pix2Pix | Validation | 25.21 | 0.8031 | 9.52 |
+| DeblurGAN v1 | Validation | 25.69 | 0.7844 | 9.23 |
+| DeblurGAN v2 | Validation | 27.02 | 0.8510 | 7.59 |
 
-The following figures are curated restoration and model-comparison outputs. Each image is embedded from the tracked `deblurred_outputs/review/` folder; the local dataset and other generated images are not included here.
+The baseline notebooks evaluate their validation split, while the Line-Curve notebook evaluates its test split. The split labels differ, so treat this as a summary of the saved experiments rather than a strictly controlled, same-split benchmark. The proposed model improves over its blurred input on the saved test examples, but U-Net and NAFNet have higher recorded validation means. These metrics should be considered alongside the qualitative examples below.
 
-### Random samples
+## U-Net and NAFNet Error Examples
 
-![Random sample restoration and comparison results](deblurred_outputs/review/random_samples.png)
+This comparison shows that higher average PSNR/SSIM does not guarantee every character is restored correctly. These image-wide metrics can overlook localized artifacts or altered strokes that matter for plate readability.
 
-### Proposed model
+![U-Net and NAFNet restoration errors](figures/unet%20and%20naf%20net%20error.png)
 
-The sample panel and worst-case example show qualitative outputs from the Line-Curve Block model. The worst-case example is included to show a difficult result, not only favorable samples.
-
-![Line-Curve Block model random samples](deblurred_outputs/review/modified_gan_random_samples.png)
-
-![Line-Curve Block model worst-case example](deblurred_outputs/review/modified_gan_worst.png)
-
-### Baseline examples
-
-These figures provide qualitative examples from the trained NAFNet and U-Net baselines. They complement, but do not replace, the quantitative comparison table above.
-
-![NAFNet worst-case example](deblurred_outputs/review/nafnet_worst.png)
-
-![U-Net worst-case example](deblurred_outputs/review/unet_worst.png)
-<!--
-## Repository Structure
-
-The repository structure is mostly notebook-based, with dataset folders, checkpoints, and generated output artifacts. A condensed view of the current project tree is:
-
-```text
-Line-Curve Block DeblurGAN/
-├── LICENSE
-├── README.md
-├── .gitignore
-├── requirements.txt
-├── best_model.pt
-├── generator_final.pth
-├── Line-Curve Block DelburGAN.ipynb
-├── deblurgan_v1_baseline.ipynb
-├── deblurgan_v2_baseline_fixed.ipynb
-├── nafnet_baseline.ipynb
-├── pix2pix_baseline.ipynb
-├── unet_baseline.ipynb
-├── generate_deblurred_dataset.ipynb
-├── generate_deblurred_outputs.ipynb
-├── generate_deblurred_outputs_modified_gan.ipynb
-├── checkpoints/
-│   ├── best.pth
-│   └── last.pth
-├── checkpoints_modified_gan/
-│   ├── best.pth
-│   └── last.pth
-├── checkpoints_deblurgan_v1/
-├── checkpoints_deblurgan_v2/
-├── checkpoints_drsn_gan/
-├── checkpoints_fmd_cgan/
-├── checkpoints_mprnet/
-├── checkpoints_nafnet/
-├── checkpoints_pix2pix/
-├── checkpoints_restormer/
-├── checkpoints_unet/
-├── dataset/
-├── new dataset/
-├── deblur gan v2 new dataset result/
-├── modified_deblur_gan_result/
-├── deblurred_outputs/
-│   ├── per_image_metrics.csv
-│   ├── per_image_metrics_modified_gan.csv
-│   ├── modified_gan/
-│   ├── nafnet/
-│   ├── review/
-│   └── unet/
-└── .venv/
-```
-
-This is the actual local structure observed in the project. Some directories and files are generated artifacts and local checkpoints rather than source code modules. -->
 
 ## Installation and Requirements
 
@@ -427,54 +367,4 @@ Recommended environment:
 - Jupyter Notebook or VS Code notebook support
 - Windows development environment, based on the hard-coded local dataset paths in the notebooks
 
-## Limitations and Future Work
-
-This project is a strong research and engineering prototype, but several limitations are worth stating clearly:
-
-- The implementation is notebook-centric rather than a packaged Python project, which makes reuse and reproducibility more difficult.
-- Dataset paths are hard-coded to local Windows folders, so the project is not immediately portable to another machine without editing the notebook paths.
-- The work uses local evaluation data and does not include a public benchmark suite or a standardized train/test split package.
-- The restoration objective is designed around Bangla license plates specifically; generalization to other text categories or non-license-plate images is not established in the current repository.
-- The model is evaluated with local metrics from the project logs and output CSVs, but not with a published benchmark or external competition-like benchmark.
-
-Potential future directions include:
-
-- packaging the training and inference pipeline into scripts for reproducible benchmarking
-- adding a more portable configuration system for dataset and checkpoint paths
-- comparing against additional deblurring baselines under the same split and evaluation protocol
-- incorporating OCR-aware training or recognition consistency loss
-- investigating deployment for real-time plate recovery in camera systems
-
-## Research Context and References
-
-The repository is not a standalone paper implementation with a formal publication record in the project tree. Based on the code and notebook structure, the design uses commonly known deep learning components and methods that are standard in deblurring research, including:
-
-- adversarial training (GAN-based restoration)
-- perceptual feature loss using VGG19 features
-- L1 reconstruction loss
-- edge-aware reconstruction loss using Sobel gradients
-- deformable convolution operations for geometry-aware feature learning
-
-This project should be understood as a custom, applied implementation for Bangla plate deblurring rather than a new theoretical framework by itself. Relevant prior work includes the DeblurGAN family and standard image restoration methods for GAN-based restoration, but the repository itself does not include a formal bibliography section or paper citation file.
-
-<!-- ## Author and Acknowledgments
-
-This README is written to represent the project as it exists in the repository and should be customized with the author’s actual name, affiliation, and contact details before public GitHub use.
-
-Suggested personal template:
-
-```md
-## Author
-
-[Your Name]
-
-Researcher / Machine Learning Engineer / Computer Vision Engineer
-
-This project was developed as part of a thesis and applied computer vision research effort focused on restoring motion-blurred Bangla license plate images.
-```
-
-Acknowledgments should include any relevant prior work or dataset sources used during development, but they should only reflect information that is actually known to the author. The repository itself does not provide a formal publication list or collaborator list, so any names beyond the author should be added only with evidence. -->
-
 ---
-
-This README documents the implementation and evaluation artifacts that are verifiable in the local repository. It intentionally distinguishes between confirmed project details and aspects that remain notebook-specific or environment-specific rather than over-claiming the generality or novelty of the method.
