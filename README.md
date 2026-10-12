@@ -324,16 +324,28 @@ The notebooks establish that the other baseline architectures were trained, but 
 
 ## Visual Results
 
-The repository contains generated comparison outputs in the `deblurred_outputs` folders. Verified output files include:
+The following figures are curated restoration and model-comparison outputs. Each image is embedded from the tracked `deblurred_outputs/review/` folder; the local dataset and other generated images are not included here.
 
-- `deblurred_outputs/modified_gan/modified_gan_random_samples.png`
-- `deblurred_outputs/modified_gan/modified_gan_worst.png`
-- `deblurred_outputs/nafnet/nafnet_worst.png`
-- `deblurred_outputs/unet/unet_worst.png`
-- `deblurred_outputs/random_samples.png`
+### Random samples
 
-These outputs are used for qualitative inspection of restoration quality and model comparisons. The notebook also generates side-by-side blurry, restored, and clean visual comparisons during the training or evaluation cells.
+![Random sample restoration and comparison results](deblurred_outputs/review/random_samples.png)
 
+### Proposed model
+
+The sample panel and worst-case example show qualitative outputs from the Line-Curve Block model. The worst-case example is included to show a difficult result, not only favorable samples.
+
+![Line-Curve Block model random samples](deblurred_outputs/review/modified_gan_random_samples.png)
+
+![Line-Curve Block model worst-case example](deblurred_outputs/review/modified_gan_worst.png)
+
+### Baseline examples
+
+These figures provide qualitative examples from the trained NAFNet and U-Net baselines. They complement, but do not replace, the quantitative comparison table above.
+
+![NAFNet worst-case example](deblurred_outputs/review/nafnet_worst.png)
+
+![U-Net worst-case example](deblurred_outputs/review/unet_worst.png)
+<!--
 ## Repository Structure
 
 The repository structure is mostly notebook-based, with dataset folders, checkpoints, and generated output artifacts. A condensed view of the current project tree is:
@@ -384,7 +396,7 @@ Line-Curve Block DeblurGAN/
 └── .venv/
 ```
 
-This is the actual local structure observed in the project. Some directories and files are generated artifacts and local checkpoints rather than source code modules.
+This is the actual local structure observed in the project. Some directories and files are generated artifacts and local checkpoints rather than source code modules. -->
 
 ## Installation and Requirements
 
