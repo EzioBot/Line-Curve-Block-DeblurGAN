@@ -16,6 +16,7 @@ The implementation is centered on preserving Bangla character geometry, includin
 - [Training](#training)
 - [Inference and Usage](#inference-and-usage)
 - [Experimental Results](#experimental-results)
+- [Model Comparison](#model-comparison)
 - [Visual Results](#visual-results)
 - [Repository Structure](#repository-structure)
 - [Installation and Requirements](#installation-and-requirements)
@@ -196,6 +197,8 @@ The notebook uses a paired-image dataset with one clean plate image and two degr
 
 The code builds paired entries by matching filenames across folders and resizing each image to `IMG_W = 256` and `IMG_H = 128` using `Image.BICUBIC` interpolation.
 
+The dataset was custom-made for this project, and its labels were manually annotated. The repository does not document the annotation schema or annotation protocol in enough detail to describe those labels more specifically.
+
 The dataset loader does the following:
 
 - loads each image in RGB format
@@ -297,6 +300,27 @@ These values are based on the project’s saved evaluation CSV and represent the
 The training notebook also reports validation metrics by epoch, including validation PSNR, SSIM, and MAE, and selects the best checkpoint based on the highest validation PSNR. The training log file is available under the local project directories such as `modified_deblur_gan_result/training_log.csv` and `deblur gan v2 new dataset result/training_log.csv`.
 
 Important caveat: because the project uses local folder paths and notebook-defined splits, direct numerical comparisons across experiments should only be made when the same data, preprocessing, and evaluation protocol were used.
+
+### Model Comparison
+
+In addition to the proposed Line-Curve model, baseline models were implemented and trained in separate project notebooks, including U-Net, NAFNet, Pix2Pix, DeblurGAN v1, and DeblurGAN v2. The saved comparison CSV, `deblurred_outputs/per_image_metrics.csv`, reports per-image results for U-Net and NAFNet. The proposed model's corresponding CSV is `deblurred_outputs/per_image_metrics_modified_gan.csv`.
+
+The table summarizes the means recorded in those two files. PSNR is higher-is-better; SSIM is higher-is-better; MAE is lower-is-better.
+
+| Blur type | Model | CSV split label | PSNR (dB) | SSIM | MAE |
+| --- | --- | --- | ---: | ---: | ---: |
+| Gaussian | Blurred input | `val` / `test`* | 28.9050 | 0.8899 | 6.5823 |
+| Gaussian | U-Net | `val` | 34.3991 | 0.9512 | 3.4491 |
+| Gaussian | NAFNet | `val` | 35.7643 | 0.9585 | 3.0160 |
+| Gaussian | Line-Curve Block model | `test` | 33.5253 | 0.9438 | 4.0031 |
+| Motion | Blurred input | `val` / `test`* | 23.6328 | 0.7444 | 11.4394 |
+| Motion | U-Net | `val` | 30.2414 | 0.9108 | 5.3887 |
+| Motion | NAFNet | `val` | 32.0822 | 0.9301 | 4.4903 |
+| Motion | Line-Curve Block model | `test` | 29.6682 | 0.9029 | 6.0193 |
+
+Each CSV contains 199 unique image names per blur type. The image names overlap across the baseline and proposed-model files, and their recorded blurred-input metrics match for each image. However, the baseline CSV labels the examples as `val`, while the proposed-model CSV labels them as `test`. Because the repository does not explain this split-label discrepancy, these numbers should be treated as results from the saved comparison artifacts, not as a fully controlled benchmark or evidence that one architecture universally outperforms another. In these recorded means, U-Net and NAFNet score higher than the proposed model on PSNR and SSIM and lower on MAE; the proposed model still improves on the blurred input for both blur types.
+
+The notebooks establish that the other baseline architectures were trained, but the currently saved per-image comparison CSV does not provide quantitative results for Pix2Pix or the DeblurGAN v1/v2 baselines. No numbers for those models are included here.
 
 ## Visual Results
 
@@ -421,7 +445,7 @@ The repository is not a standalone paper implementation with a formal publicatio
 
 This project should be understood as a custom, applied implementation for Bangla plate deblurring rather than a new theoretical framework by itself. Relevant prior work includes the DeblurGAN family and standard image restoration methods for GAN-based restoration, but the repository itself does not include a formal bibliography section or paper citation file.
 
-## Author and Acknowledgments
+<!-- ## Author and Acknowledgments
 
 This README is written to represent the project as it exists in the repository and should be customized with the author’s actual name, affiliation, and contact details before public GitHub use.
 
@@ -437,7 +461,7 @@ Researcher / Machine Learning Engineer / Computer Vision Engineer
 This project was developed as part of a thesis and applied computer vision research effort focused on restoring motion-blurred Bangla license plate images.
 ```
 
-Acknowledgments should include any relevant prior work or dataset sources used during development, but they should only reflect information that is actually known to the author. The repository itself does not provide a formal publication list or collaborator list, so any names beyond the author should be added only with evidence.
+Acknowledgments should include any relevant prior work or dataset sources used during development, but they should only reflect information that is actually known to the author. The repository itself does not provide a formal publication list or collaborator list, so any names beyond the author should be added only with evidence. -->
 
 ---
 
